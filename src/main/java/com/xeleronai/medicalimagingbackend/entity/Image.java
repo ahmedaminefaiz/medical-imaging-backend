@@ -2,6 +2,8 @@ package com.xeleronai.medicalimagingbackend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,6 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import com.xeleronai.medicalimagingbackend.entity.enums.FormatImageEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,14 +36,15 @@ public class Image {
     @JoinColumn(name = "examen_id", nullable = false)
     private Examen examen;
 
-    @Column(name = "chemin_dcm", length = 2048)
-    private String cheminDcm;
+    @Column(name = "chemin_original", length = 2048)
+    private String cheminOriginal;
 
     @Column(name = "chemin_apercu", length = 2048)
     private String cheminApercu;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "format", length = 50)
-    private String format;
+    private FormatImageEnum format;
 
     @Column(name = "ordre")
     private Integer ordre;
