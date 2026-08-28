@@ -1,6 +1,7 @@
 package com.xeleronai.medicalimagingbackend.controller;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,5 +43,40 @@ class ExamenControllerSecurityTest {
                         .file(fichier)
                         .with(user("admin@test.com").roles("ADMIN")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void listerExamens_sansAuthentification_retourne401() throws Exception {
+        mockMvc.perform(get("/api/v1/examens"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listerExamens_roleAdmin_estAutorise() throws Exception {
+        // Contrairement à l'upload, ADMIN a accès en lecture (voir specify.md).
+        mockMvc.perform(get("/api/v1/examens")
+                        .with(user("admin@test.com").roles("ADMIN")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listerExamens_sizeInvalide_retourne400() throws Exception {
+        mockMvc.perform(get("/api/v1/examens?size=0")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listerExamens_pageNegative_retourne400() throws Exception {
+        mockMvc.perform(get("/api/v1/examens?page=-1")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void detailExamen_idInexistant_retourne404() throws Exception {
+        mockMvc.perform(get("/api/v1/examens/999999999")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isNotFound());
     }
 }

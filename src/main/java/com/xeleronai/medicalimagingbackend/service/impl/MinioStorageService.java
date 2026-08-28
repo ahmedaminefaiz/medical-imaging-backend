@@ -1,8 +1,11 @@
 package com.xeleronai.medicalimagingbackend.service.impl;
 
+import com.xeleronai.medicalimagingbackend.service.LectureImpossibleException;
 import com.xeleronai.medicalimagingbackend.service.StorageService;
 import com.xeleronai.medicalimagingbackend.service.UploadEchoueException;
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -64,6 +67,16 @@ public class MinioStorageService implements StorageService {
                     .build());
         } catch (Exception e) {
             throw new UploadEchoueException("Échec du stockage MinIO pour la clé " + cle, e);
+        }
+    }
+
+    @Override
+    public byte[] lire(String cle) {
+        try (GetObjectResponse reponse = minioClient.getObject(
+                GetObjectArgs.builder().bucket(bucket).object(cle).build())) {
+            return reponse.readAllBytes();
+        } catch (Exception e) {
+            throw new LectureImpossibleException("Échec de lecture MinIO pour la clé " + cle, e);
         }
     }
 

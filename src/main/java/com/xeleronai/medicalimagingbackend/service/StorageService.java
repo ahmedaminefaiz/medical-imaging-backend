@@ -24,4 +24,10 @@ public interface StorageService {
      * masquer l'erreur d'origine remontée à l'appelant.
      */
     void supprimerSilencieux(List<String> cles);
+
+    /**
+     * Lit le contenu d'un objet MinIO.
+     * @throws LectureImpossibleException si l'objet est absent ou MinIO injoignable.
+     */
+    byte[] lire(String cle);
 }

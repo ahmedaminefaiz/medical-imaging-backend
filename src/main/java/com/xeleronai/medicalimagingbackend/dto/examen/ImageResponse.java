@@ -9,11 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImageUploadResponse {
+public class ImageResponse {
 
     private Long imageId;
     private String format;
-    private String cheminOriginal;
-    private String cheminApercu;
+    private Boolean apercuDisponible;
     private Integer ordre;
 }

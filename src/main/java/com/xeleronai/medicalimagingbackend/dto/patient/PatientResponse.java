@@ -1,6 +1,6 @@
-package com.xeleronai.medicalimagingbackend.dto.examen;
+package com.xeleronai.medicalimagingbackend.dto.patient;
 
-import java.util.List;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ExamenUploadResponse {
+public class PatientResponse {
 
-    private Long examenId;
     private Long patientId;
     private String mrn;
-    private Integer nombreImages;
-    private List<ImageResponse> images;
+    private String nom;
+    private LocalDate dateNaissance;
+    private String sexe;
 }
