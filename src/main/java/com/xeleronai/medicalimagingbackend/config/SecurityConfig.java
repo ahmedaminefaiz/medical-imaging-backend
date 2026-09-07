@@ -3,6 +3,7 @@ package com.xeleronai.medicalimagingbackend.config;
 import com.xeleronai.medicalimagingbackend.repository.UtilisateurRepository;
 import com.xeleronai.medicalimagingbackend.security.JwtAuthFilter;
 import com.xeleronai.medicalimagingbackend.security.JwtService;
+import com.xeleronai.medicalimagingbackend.security.LoginRateLimitFilter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -58,6 +59,7 @@ public class SecurityConfig {
             CorsConfigurationSource corsConfigurationSource) throws Exception {
 
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(jwtService, utilisateurRepository);
+        LoginRateLimitFilter loginRateLimitFilter = new LoginRateLimitFilter();
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -69,7 +71,8 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendError(HttpStatus.UNAUTHORIZED.value())))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(loginRateLimitFilter, JwtAuthFilter.class);
 
         return http.build();
     }
