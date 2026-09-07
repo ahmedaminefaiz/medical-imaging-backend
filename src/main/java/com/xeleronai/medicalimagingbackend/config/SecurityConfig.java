@@ -65,6 +65,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Le dispatch d'erreur interne de Spring Boot (ex. MaxUploadSizeExceededException
+                        // levée avant que le controller ne soit atteint) repasse par toute la chaîne de
+                        // filtres de sécurité. Sans permitAll ici, /error exige une authentification que
+                        // ce dispatch interne ne porte pas forcément, et renvoie 401 au lieu de la vraie
+                        // erreur (ex. 413) — ce qui trompe le frontend en lui faisant croire à une session
+                        // expirée et déclenche une déconnexion.
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
