@@ -1,8 +1,11 @@
 package com.xeleronai.medicalimagingbackend.entity;
 
+import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -51,6 +54,10 @@ public class Examen {
 
     @Column(name = "modalite", length = 50)
     private String modalite;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "zone", length = 50)
+    private ExamenZoneEnum zone;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

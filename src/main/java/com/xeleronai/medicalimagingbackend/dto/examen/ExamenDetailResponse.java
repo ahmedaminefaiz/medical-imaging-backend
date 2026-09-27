@@ -19,6 +19,7 @@ public class ExamenDetailResponse {
     private String type;
     private LocalDate dateExamen;
     private String modalite;
+    private String zone;
     private String creePar;
     private List<ImageResponse> images;
 }

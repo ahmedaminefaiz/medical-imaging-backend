@@ -5,6 +5,7 @@ import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.service.ExamenPersistenceService;
@@ -33,6 +34,7 @@ public class ExamenPersistenceServiceImpl implements ExamenPersistenceService {
             String type,
             LocalDate dateExamen,
             String modalite,
+            ExamenZoneEnum zone,
             List<ImagePreparee> images) {
 
         Examen examen = Examen.builder()
@@ -41,6 +43,7 @@ public class ExamenPersistenceServiceImpl implements ExamenPersistenceService {
                 .type(type)
                 .dateExamen(dateExamen)
                 .modalite(modalite)
+                .zone(zone)
                 .images(new ArrayList<>())
                 .build();
 

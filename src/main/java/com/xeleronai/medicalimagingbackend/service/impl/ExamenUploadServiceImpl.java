@@ -77,6 +77,7 @@ public class ExamenUploadServiceImpl implements ExamenUploadService {
                     request.getType(),
                     request.getDateExamen() != null ? request.getDateExamen() : LocalDate.now(),
                     request.getModalite(),
+                    null,
                     images);
 
             return examenMapper.toResponse(examen);
@@ -135,6 +136,7 @@ public class ExamenUploadServiceImpl implements ExamenUploadService {
                     reference.type(),
                     reference.dateExamen() != null ? reference.dateExamen() : LocalDate.now(),
                     reference.modalite(),
+                    reference.zone(),
                     images);
 
             return examenMapper.toResponse(examen);

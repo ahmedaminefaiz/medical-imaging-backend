@@ -1,5 +1,6 @@
 package com.xeleronai.medicalimagingbackend.service;
 
+import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import java.time.LocalDate;
 
 /**
@@ -13,6 +14,7 @@ public record DicomMetadata(
         String sexe,
         LocalDate dateExamen,
         String modalite,
+        ExamenZoneEnum zone,
         String type,
         String studyInstanceUid
 ) {

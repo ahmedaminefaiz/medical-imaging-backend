@@ -4,6 +4,7 @@ import com.xeleronai.medicalimagingbackend.dto.examen.ExamenUploadResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.UploadStandardRequest;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.security.SecurityUtils;
+import com.xeleronai.medicalimagingbackend.service.DetectionQueryService;
 import com.xeleronai.medicalimagingbackend.service.ExamenQueryService;
 import com.xeleronai.medicalimagingbackend.service.ExamenUploadService;
 import com.xeleronai.medicalimagingbackend.service.LectureImpossibleException;
@@ -44,6 +45,7 @@ public class ExamenController {
 
     private final ExamenUploadService examenUploadService;
     private final ExamenQueryService examenQueryService;
+    private final DetectionQueryService detectionQueryService;
     private final SecurityUtils securityUtils;
 
     @PostMapping(value = "/upload/standard", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -93,6 +95,19 @@ public class ExamenController {
     @Operation(summary = "Détail d'un examen et de ses images")
     public ResponseEntity<?> detail(@PathVariable Long id) {
         return ResponseEntity.ok(examenQueryService.detail(id));
+    }
+
+    @GetMapping("/{examenId}/detections")
+    @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN', 'ADMIN')")
+    @Operation(summary = "Liste des détections IA d'un examen (résultats bruts, non validés)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Liste des détections (vide si aucune)"),
+        @ApiResponse(responseCode = "401", description = "Non authentifié"),
+        @ApiResponse(responseCode = "403", description = "Rôle non autorisé"),
+        @ApiResponse(responseCode = "404", description = "Examen introuvable")
+    })
+    public ResponseEntity<?> detections(@PathVariable Long examenId) {
+        return ResponseEntity.ok(detectionQueryService.listerParExamen(examenId));
     }
 
     @GetMapping("/{examenId}/images/{imageId}/apercu")

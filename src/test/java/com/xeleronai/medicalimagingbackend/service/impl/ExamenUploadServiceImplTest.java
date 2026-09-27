@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -18,6 +19,7 @@ import com.xeleronai.medicalimagingbackend.dto.examen.UploadStandardRequest;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.FormatImageEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.RoleUtilisateur;
 import com.xeleronai.medicalimagingbackend.service.DicomMetadata;
@@ -95,7 +97,7 @@ class ExamenUploadServiceImplTest {
                 .build();
 
         when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, null)).thenReturn(patient);
-        when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), anyList()))
+        when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), any(), anyList()))
                 .thenReturn(examenSauvegarde);
         when(examenMapper.toResponse(examenSauvegarde)).thenReturn(reponseAttendue);
 
@@ -105,7 +107,7 @@ class ExamenUploadServiceImplTest {
 
         ArgumentCaptor<List<ImagePreparee>> imagesCaptor = ArgumentCaptor.forClass(List.class);
         verify(examenPersistenceService).persisterExamen(
-                eq(patient), eq(utilisateur), any(), eq(LocalDate.now()), any(), imagesCaptor.capture());
+                eq(patient), eq(utilisateur), any(), eq(LocalDate.now()), any(), isNull(), imagesCaptor.capture());
 
         List<ImagePreparee> images = imagesCaptor.getValue();
         assertThat(images).hasSize(2);
@@ -142,7 +144,7 @@ class ExamenUploadServiceImplTest {
         verify(storageService).supprimerSilencieux(clesCaptor.capture());
         assertThat(clesCaptor.getValue()).hasSize(1);
 
-        verify(examenPersistenceService, never()).persisterExamen(any(), any(), any(), any(), any(), anyList());
+        verify(examenPersistenceService, never()).persisterExamen(any(), any(), any(), any(), any(), any(), anyList());
     }
 
     @Test
@@ -150,14 +152,16 @@ class ExamenUploadServiceImplTest {
         MockMultipartFile f1 = new MockMultipartFile("files", "a.dcm", "application/dicom", new byte[] {1});
         MockMultipartFile f2 = new MockMultipartFile("files", "b.dcm", "application/dicom", new byte[] {1});
 
-        DicomMetadata meta1 = new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", "Thorax", "STUDY-UID-1");
-        DicomMetadata meta2 = new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", "Thorax", "STUDY-UID-1");
+        DicomMetadata meta1 =
+                new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", ExamenZoneEnum.THORAX, "Thorax", "STUDY-UID-1");
+        DicomMetadata meta2 =
+                new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", ExamenZoneEnum.THORAX, "Thorax", "STUDY-UID-1");
         when(dicomMetadataService.extraire(f1)).thenReturn(meta1);
         when(dicomMetadataService.extraire(f2)).thenReturn(meta2);
         when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, "M")).thenReturn(patient);
         when(dicomPreviewService.genererApercuPng(f1)).thenReturn(Optional.of(new byte[] {9, 9}));
         when(dicomPreviewService.genererApercuPng(f2)).thenReturn(Optional.empty());
-        when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), anyList()))
+        when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), any(), anyList()))
                 .thenReturn(examenSauvegarde);
         when(examenMapper.toResponse(examenSauvegarde)).thenReturn(reponseAttendue);
 
@@ -167,7 +171,7 @@ class ExamenUploadServiceImplTest {
 
         ArgumentCaptor<List<ImagePreparee>> imagesCaptor = ArgumentCaptor.forClass(List.class);
         verify(examenPersistenceService).persisterExamen(
-                eq(patient), eq(utilisateur), any(), any(), any(), imagesCaptor.capture());
+                eq(patient), eq(utilisateur), any(), any(), eq("CT"), eq(ExamenZoneEnum.THORAX), imagesCaptor.capture());
 
         List<ImagePreparee> images = imagesCaptor.getValue();
         assertThat(images).hasSize(2);
@@ -181,8 +185,10 @@ class ExamenUploadServiceImplTest {
         MockMultipartFile f1 = new MockMultipartFile("files", "a.dcm", "application/dicom", new byte[] {1});
         MockMultipartFile f2 = new MockMultipartFile("files", "b.dcm", "application/dicom", new byte[] {1});
 
-        DicomMetadata meta1 = new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", "Thorax", "STUDY-UID-1");
-        DicomMetadata meta2 = new DicomMetadata("MRN-2", "Martin", null, "F", null, "CT", "Thorax", "STUDY-UID-1");
+        DicomMetadata meta1 =
+                new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", ExamenZoneEnum.THORAX, "Thorax", "STUDY-UID-1");
+        DicomMetadata meta2 =
+                new DicomMetadata("MRN-2", "Martin", null, "F", null, "CT", ExamenZoneEnum.THORAX, "Thorax", "STUDY-UID-1");
         when(dicomMetadataService.extraire(f1)).thenReturn(meta1);
         when(dicomMetadataService.extraire(f2)).thenReturn(meta2);
 
