@@ -3,6 +3,7 @@ package com.xeleronai.medicalimagingbackend.service;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,5 +21,6 @@ public interface ExamenPersistenceService {
             String type,
             LocalDate dateExamen,
             String modalite,
+            ExamenZoneEnum zone,
             List<ImagePreparee> images);
 }

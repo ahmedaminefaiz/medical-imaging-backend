@@ -33,3 +33,7 @@ build/
 .vscode/
 
 CLAUDE.md
+
+### Logs d'exécution locale ###
+run.log
+run.err.log

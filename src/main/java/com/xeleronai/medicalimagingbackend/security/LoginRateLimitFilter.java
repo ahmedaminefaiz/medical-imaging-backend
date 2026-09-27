@@ -18,8 +18,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Limite le bruteforce sur POST /api/v1/auth/login : 5 tentatives par
- * minute et par IP cliente, refill progressif (1 tentative revient
- * disponible environ toutes les 12s après un burst de 5).
+ * minute et par IP cliente, fenêtre fixe (refill intervally) — une fois les
+ * 5 jetons consommés, aucun ne revient avant que la minute entière depuis le
+ * début de la fenêtre soit écoulée (contrairement à un refill progressif, où
+ * un attaquant espaçant ses tentatives d'une douzaine de secondes ne serait
+ * jamais bloqué net).
  *
  * Ne s'applique qu'à cet endpoint précis — {@link #shouldNotFilter} laisse
  * passer tout le reste de l'API sans overhead.
@@ -79,7 +82,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
     private Bucket newBucket() {
         return Bucket.builder()
-                .addLimit(limit -> limit.capacity(MAX_ATTEMPTS).refillGreedy(MAX_ATTEMPTS, WINDOW))
+                .addLimit(limit -> limit.capacity(MAX_ATTEMPTS).refillIntervally(MAX_ATTEMPTS, WINDOW))
                 .build();
     }
 
