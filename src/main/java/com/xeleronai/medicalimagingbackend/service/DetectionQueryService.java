@@ -1,5 +1,6 @@
 package com.xeleronai.medicalimagingbackend.service;
 
+import com.xeleronai.medicalimagingbackend.dto.detection.AnalyseStatutResponse;
 import com.xeleronai.medicalimagingbackend.dto.detection.DetectionResponse;
 import java.util.List;
 
@@ -12,4 +13,11 @@ public interface DetectionQueryService {
      * @throws RessourceIntrouvableException si l'examen n'existe pas.
      */
     List<DetectionResponse> listerParExamen(Long examenId);
+
+    /**
+     * Statut courant de l'analyse IA d'un examen (pour polling).
+     *
+     * @throws RessourceIntrouvableException si l'examen n'existe pas.
+     */
+    AnalyseStatutResponse statutAnalyse(Long examenId);
 }
