@@ -1,6 +1,8 @@
 package com.xeleronai.medicalimagingbackend.service.impl;
 
+import com.xeleronai.medicalimagingbackend.dto.detection.AnalyseStatutResponse;
 import com.xeleronai.medicalimagingbackend.dto.detection.DetectionResponse;
+import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.repository.DetectionRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.service.DetectionQueryService;
@@ -28,5 +30,18 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
         return detectionRepository.findByExamenId(examenId).stream()
                 .map(detectionMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AnalyseStatutResponse statutAnalyse(Long examenId) {
+        Examen examen = examenRepository.findById(examenId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Examen introuvable"));
+        return AnalyseStatutResponse.builder()
+                .examenId(examen.getId())
+                .statut(examen.getStatutAnalyse().name())
+                .message(examen.getAnalyseMessage())
+                .finieLe(examen.getAnalyseFinieLe())
+                .build();
     }
 }

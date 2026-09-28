@@ -79,4 +79,39 @@ class ExamenControllerSecurityTest {
                         .with(user("radio@test.com").roles("RADIOLOGUE")))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void analyser_sansAuthentification_retourne401() throws Exception {
+        mockMvc.perform(post("/api/v1/examens/1/detections/analyser"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void analyser_roleAdmin_retourne403() throws Exception {
+        mockMvc.perform(post("/api/v1/examens/1/detections/analyser")
+                        .with(user("admin@test.com").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void analyser_idInexistant_retourne404() throws Exception {
+        mockMvc.perform(post("/api/v1/examens/999999999/detections/analyser")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void statutAnalyse_sansAuthentification_retourne401() throws Exception {
+        mockMvc.perform(get("/api/v1/examens/1/detections/statut"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void statutAnalyse_roleTechnicien_idInexistant_retourne404() throws Exception {
+        // Le rôle doit être accepté (pas de 403) avant que l'examen introuvable
+        // ne produise un 404 — vérifie l'ordre autorisation puis résolution.
+        mockMvc.perform(get("/api/v1/examens/999999999/detections/statut")
+                        .with(user("technicien@test.com").roles("TECHNICIEN")))
+                .andExpect(status().isNotFound());
+    }
 }

@@ -1,5 +1,6 @@
 package com.xeleronai.medicalimagingbackend.entity;
 
+import com.xeleronai.medicalimagingbackend.entity.enums.AnalyseStatutEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -61,6 +62,17 @@ public class Examen {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_analyse", nullable = false, length = 20)
+    @Builder.Default
+    private AnalyseStatutEnum statutAnalyse = AnalyseStatutEnum.EN_ATTENTE;
+
+    @Column(name = "analyse_message", length = 500)
+    private String analyseMessage;
+
+    @Column(name = "analyse_finie_le")
+    private LocalDateTime analyseFinieLe;
 
     @OneToMany(mappedBy = "examen", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")

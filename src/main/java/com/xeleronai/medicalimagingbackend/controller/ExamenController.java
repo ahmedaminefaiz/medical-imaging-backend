@@ -1,9 +1,13 @@
 package com.xeleronai.medicalimagingbackend.controller;
 
+import com.xeleronai.medicalimagingbackend.dto.detection.AnalyseLanceeResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.ExamenUploadResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.UploadStandardRequest;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.security.SecurityUtils;
+import com.xeleronai.medicalimagingbackend.service.AnalyseEnCoursException;
+import com.xeleronai.medicalimagingbackend.service.AnalyseNonLancableException;
+import com.xeleronai.medicalimagingbackend.service.DetectionAnalyseService;
 import com.xeleronai.medicalimagingbackend.service.DetectionQueryService;
 import com.xeleronai.medicalimagingbackend.service.ExamenQueryService;
 import com.xeleronai.medicalimagingbackend.service.ExamenUploadService;
@@ -46,6 +50,7 @@ public class ExamenController {
     private final ExamenUploadService examenUploadService;
     private final ExamenQueryService examenQueryService;
     private final DetectionQueryService detectionQueryService;
+    private final DetectionAnalyseService detectionAnalyseService;
     private final SecurityUtils securityUtils;
 
     @PostMapping(value = "/upload/standard", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -110,6 +115,38 @@ public class ExamenController {
         return ResponseEntity.ok(detectionQueryService.listerParExamen(examenId));
     }
 
+    @PostMapping("/{examenId}/detections/analyser")
+    @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN')")
+    @Operation(summary = "Lance l'analyse IA d'un examen (asynchrone, ne bloque pas)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "202", description = "Analyse lancée, en cours"),
+        @ApiResponse(responseCode = "401", description = "Non authentifié"),
+        @ApiResponse(responseCode = "403", description = "Rôle non autorisé"),
+        @ApiResponse(responseCode = "404", description = "Examen introuvable"),
+        @ApiResponse(responseCode = "409", description = "Analyse déjà en cours"),
+        @ApiResponse(responseCode = "422", description = "Modalité/zone manquante ou aucune image")
+    })
+    public ResponseEntity<?> analyser(@PathVariable Long examenId) {
+        Utilisateur utilisateurCourant = securityUtils.getUtilisateurCourant();
+        detectionAnalyseService.lancerAnalyse(examenId, utilisateurCourant);
+        detectionAnalyseService.analyserEnArrierePlan(examenId, utilisateurCourant.getId());
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(AnalyseLanceeResponse.builder().examenId(examenId).statut("EN_COURS").build());
+    }
+
+    @GetMapping("/{examenId}/detections/statut")
+    @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN', 'ADMIN')")
+    @Operation(summary = "Statut de l'analyse IA en cours ou terminée (pour polling)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Statut courant"),
+        @ApiResponse(responseCode = "401", description = "Non authentifié"),
+        @ApiResponse(responseCode = "403", description = "Rôle non autorisé"),
+        @ApiResponse(responseCode = "404", description = "Examen introuvable")
+    })
+    public ResponseEntity<?> statutAnalyse(@PathVariable Long examenId) {
+        return ResponseEntity.ok(detectionQueryService.statutAnalyse(examenId));
+    }
+
     @GetMapping("/{examenId}/images/{imageId}/apercu")
     @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN', 'ADMIN')")
     @Operation(summary = "Aperçu PNG d'une image")
@@ -144,5 +181,15 @@ public class ExamenController {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(AnalyseEnCoursException.class)
+    public ResponseEntity<String> handleAnalyseEnCours(AnalyseEnCoursException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(AnalyseNonLancableException.class)
+    public ResponseEntity<String> handleAnalyseNonLancable(AnalyseNonLancableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
     }
 }
