@@ -13,6 +13,7 @@ import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.repository.UtilisateurRepository;
 import com.xeleronai.medicalimagingbackend.service.DetectionIA;
 import com.xeleronai.medicalimagingbackend.service.DetectionRunPersistenceService;
+import com.xeleronai.medicalimagingbackend.service.MasqueDetecte;
 import com.xeleronai.medicalimagingbackend.service.PredictionIA;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -69,6 +70,43 @@ public class DetectionRunPersistenceServiceImpl implements DetectionRunPersisten
         }
         detectionRepository.saveAll(detections);
 
+        marquerAnalyseTerminee(examenId, detections.size(), utilisateurId);
+    }
+
+    @Override
+    @Transactional
+    public void enregistrerSuccesMasques(
+            Long examenId, List<Image> imagesOrdonnees, List<MasqueDetecte> masques, Long utilisateurId) {
+
+        Map<Integer, Image> parOrdre = new HashMap<>();
+        for (Image image : imagesOrdonnees) {
+            parOrdre.put(image.getOrdre(), image);
+        }
+
+        List<Detection> detections = new ArrayList<>();
+        for (MasqueDetecte m : masques) {
+            Image image = parOrdre.get(m.coupe());
+            if (image == null) {
+                log.warn("Masque ignoré : coupe {} hors de la plage des images de l'examen {}",
+                        m.coupe(), examenId);
+                continue;
+            }
+            detections.add(Detection.builder()
+                    .image(image)
+                    .type(DetectionTypeEnum.MASQUE)
+                    .anomalie(m.label())
+                    .confiance(m.confiance())
+                    .statut(DetectionStatutEnum.EN_ATTENTE)
+                    .coupe(m.coupe())
+                    .cheminMasque(m.cheminMasque())
+                    .build());
+        }
+        detectionRepository.saveAll(detections);
+
+        marquerAnalyseTerminee(examenId, detections.size(), utilisateurId);
+    }
+
+    private void marquerAnalyseTerminee(Long examenId, int nombreDetections, Long utilisateurId) {
         Examen examen = examenRepository.findById(examenId)
                 .orElseThrow(() -> new IllegalStateException("Examen disparu pendant l'analyse : " + examenId));
         examen.setStatutAnalyse(AnalyseStatutEnum.TERMINEE);
@@ -78,7 +116,7 @@ public class DetectionRunPersistenceServiceImpl implements DetectionRunPersisten
 
         ecrireAudit(examenId, utilisateurId);
 
-        log.info("Analyse IA terminée (examenId={}, nombreDetections={})", examenId, detections.size());
+        log.info("Analyse IA terminée (examenId={}, nombreDetections={})", examenId, nombreDetections);
     }
 
     @Override

@@ -13,12 +13,13 @@ public interface DetectionMapper {
 
     @Mapping(target = "imageId", source = "image.id")
     @Mapping(target = "bbox", expression = "java(toBbox(detection))")
+    @Mapping(target = "apercuMasqueDisponible", expression = "java(toApercuMasqueDisponible(detection))")
     DetectionResponse toResponse(Detection detection);
 
     /**
      * bbox n'a de sens que pour une détection BOX ; pour une détection
-     * MASQUE (non produite en v1, schéma déjà prévu), x/y/largeur/hauteur ne
-     * sont jamais renseignés donc bbox reste null.
+     * MASQUE, x/y/largeur/hauteur ne sont jamais renseignés donc bbox reste
+     * null.
      */
     default BboxResponse toBbox(Detection detection) {
         if (detection.getType() != DetectionTypeEnum.BOX) {
@@ -30,5 +31,13 @@ public interface DetectionMapper {
                 .largeur(detection.getLargeur())
                 .hauteur(detection.getHauteur())
                 .build();
+    }
+
+    /**
+     * La clé MinIO du masque (chemin_masque) n'est jamais exposée via
+     * l'API ; seule sa disponibilité l'est.
+     */
+    default boolean toApercuMasqueDisponible(Detection detection) {
+        return detection.getType() == DetectionTypeEnum.MASQUE && detection.getCheminMasque() != null;
     }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,9 +26,12 @@ import com.xeleronai.medicalimagingbackend.service.DetectionAiIndisponibleExcept
 import com.xeleronai.medicalimagingbackend.service.DetectionIA;
 import com.xeleronai.medicalimagingbackend.service.DetectionRunPersistenceService;
 import com.xeleronai.medicalimagingbackend.service.LectureImpossibleException;
+import com.xeleronai.medicalimagingbackend.service.MasqueDetecte;
 import com.xeleronai.medicalimagingbackend.service.PredictionIA;
 import com.xeleronai.medicalimagingbackend.service.RessourceIntrouvableException;
 import com.xeleronai.medicalimagingbackend.service.StorageService;
+import com.xeleronai.medicalimagingbackend.service.UploadEchoueException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -155,7 +159,7 @@ class DetectionAnalyseServiceImplTest {
         when(storageService.lire("examens/a/1.dcm")).thenReturn(new byte[] {2});
 
         PredictionIA prediction = new PredictionIA("BOX", List.of(
-                new DetectionIA("nodule", new BboxIA(1.0, 2.0, 3.0, 4.0), 0.9, 0)));
+                new DetectionIA("nodule", new BboxIA(1.0, 2.0, 3.0, 4.0), 0.9, 0, null)));
         when(detectionAiClient.predict(any(), eq("CT"), eq("THORAX"))).thenReturn(prediction);
 
         service.analyserEnArrierePlan(42L, utilisateur.getId());
@@ -187,6 +191,79 @@ class DetectionAnalyseServiceImplTest {
 
         verify(detectionRunPersistenceService, times(1))
                 .enregistrerEchec(eq(42L), any(), eq(utilisateur.getId()));
+        verify(detectionRunPersistenceService, never())
+                .enregistrerSucces(any(), any(), any(), any());
+    }
+
+    @Test
+    void analyserEnArrierePlan_masque_uploadeChaqueMasqueEtAppelleEnregistrerSuccesMasques() {
+        Examen examen = examenValide(42L);
+        Image image0 = Image.builder().id(10L).ordre(0).cheminOriginal("examens/a/0.dcm").build();
+        Image image1 = Image.builder().id(11L).ordre(1).cheminOriginal("examens/a/1.dcm").build();
+        List<Image> images = List.of(image0, image1);
+
+        when(examenRepository.findById(42L)).thenReturn(Optional.of(examen));
+        when(imageRepository.findByExamenIdOrderByOrdreAsc(42L)).thenReturn(images);
+        when(storageService.lire("examens/a/0.dcm")).thenReturn(new byte[] {1});
+        when(storageService.lire("examens/a/1.dcm")).thenReturn(new byte[] {2});
+
+        String base64Masque0 = Base64.getEncoder().encodeToString(new byte[] {9, 9});
+        String base64Masque1 = Base64.getEncoder().encodeToString(new byte[] {8, 8});
+        PredictionIA prediction = new PredictionIA("MASQUE", List.of(
+                new DetectionIA("rate", null, 0.8, 0, base64Masque0),
+                new DetectionIA("rate", null, 0.7, 1, base64Masque1)));
+        when(detectionAiClient.predict(any(), eq("CT"), eq("THORAX"))).thenReturn(prediction);
+
+        service.analyserEnArrierePlan(42L, utilisateur.getId());
+
+        ArgumentCaptor<String> cleCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageService, times(2)).uploader(cleCaptor.capture(), any(byte[].class), eq("image/png"));
+        List<String> cles = cleCaptor.getAllValues();
+        assertThat(cles).hasSize(2);
+        assertThat(cles.get(0)).startsWith("examens/42/masques/");
+        assertThat(cles.get(1)).startsWith("examens/42/masques/");
+        assertThat(cles.get(0)).isNotEqualTo(cles.get(1));
+
+        ArgumentCaptor<List<MasqueDetecte>> masquesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(detectionRunPersistenceService)
+                .enregistrerSuccesMasques(eq(42L), eq(images), masquesCaptor.capture(), eq(utilisateur.getId()));
+        List<MasqueDetecte> masques = masquesCaptor.getValue();
+        assertThat(masques).hasSize(2);
+        assertThat(masques.get(0).coupe()).isEqualTo(0);
+        assertThat(masques.get(0).label()).isEqualTo("rate");
+        assertThat(masques.get(0).confiance()).isEqualTo(0.8);
+        assertThat(masques.get(0).cheminMasque()).isEqualTo(cles.get(0));
+        assertThat(masques.get(1).coupe()).isEqualTo(1);
+        assertThat(masques.get(1).cheminMasque()).isEqualTo(cles.get(1));
+
+        verify(detectionRunPersistenceService, never())
+                .enregistrerSucces(any(), any(), any(), any());
+        verify(detectionRunPersistenceService, never())
+                .enregistrerEchec(any(), any(), any());
+    }
+
+    @Test
+    void analyserEnArrierePlan_masque_echecUploadMinio_appelleEnregistrerEchec_pasDePersistancePartielle() {
+        Examen examen = examenValide(42L);
+        Image image0 = Image.builder().id(10L).ordre(0).cheminOriginal("examens/a/0.dcm").build();
+
+        when(examenRepository.findById(42L)).thenReturn(Optional.of(examen));
+        when(imageRepository.findByExamenIdOrderByOrdreAsc(42L)).thenReturn(List.of(image0));
+        when(storageService.lire("examens/a/0.dcm")).thenReturn(new byte[] {1});
+
+        String base64Masque = Base64.getEncoder().encodeToString(new byte[] {9, 9});
+        PredictionIA prediction = new PredictionIA("MASQUE", List.of(
+                new DetectionIA("rate", null, 0.8, 0, base64Masque)));
+        when(detectionAiClient.predict(any(), eq("CT"), eq("THORAX"))).thenReturn(prediction);
+        doThrow(new UploadEchoueException("échec stockage masque", new RuntimeException()))
+                .when(storageService).uploader(any(), any(byte[].class), any());
+
+        service.analyserEnArrierePlan(42L, utilisateur.getId());
+
+        verify(detectionRunPersistenceService, times(1))
+                .enregistrerEchec(eq(42L), any(), eq(utilisateur.getId()));
+        verify(detectionRunPersistenceService, never())
+                .enregistrerSuccesMasques(any(), any(), any(), any());
         verify(detectionRunPersistenceService, never())
                 .enregistrerSucces(any(), any(), any(), any());
     }

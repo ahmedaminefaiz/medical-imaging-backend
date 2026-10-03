@@ -19,6 +19,16 @@ public interface DetectionRunPersistenceService {
     void enregistrerSucces(Long examenId, List<Image> imagesOrdonnees, PredictionIA prediction, Long utilisateurId);
 
     /**
+     * Persiste les Detection de type MASQUE d'un run (masques déjà décodés
+     * et déjà uploadés dans MinIO par l'appelant — voir MasqueDetecte),
+     * passe statutAnalyse=TERMINEE, écrit l'AuditLog DETECTION_RUN. Même
+     * contrat transactionnel que enregistrerSucces : transaction unique,
+     * toute erreur annule l'ensemble (aucune Detection partielle). Ne fait
+     * jamais d'accès MinIO (déjà fait en amont par l'appelant).
+     */
+    void enregistrerSuccesMasques(Long examenId, List<Image> imagesOrdonnees, List<MasqueDetecte> masques, Long utilisateurId);
+
+    /**
      * Passe statutAnalyse=ECHOUEE + analyseMessage, écrit l'AuditLog
      * DETECTION_RUN. Ne touche jamais la table detection.
      */

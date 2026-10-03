@@ -65,6 +65,30 @@ class DetectionAiClientImplTest {
     }
 
     @Test
+    void predict_reponseMasque_desserialiseMasqueBase64DepuisLeChampSnakeCase() {
+        server.expect(requestToUriTemplate(BASE_URL + "/predict?modalite=CT&zone=ABDOMEN"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(
+                        """
+                        {"type":"MASQUE","detections":[
+                            {"label":"rate","masque_base64":"iVBORw0KG==","confiance":0.93,"coupe":42}
+                        ]}
+                        """,
+                        MediaType.APPLICATION_JSON));
+
+        PredictionIA resultat = client.predict(List.of(new byte[] {1, 2, 3}), "CT", "ABDOMEN");
+
+        assertThat(resultat.type()).isEqualTo("MASQUE");
+        assertThat(resultat.detections()).hasSize(1);
+        assertThat(resultat.detections().get(0).masqueBase64()).isEqualTo("iVBORw0KG==");
+        assertThat(resultat.detections().get(0).label()).isEqualTo("rate");
+        assertThat(resultat.detections().get(0).coupe()).isEqualTo(42);
+        assertThat(resultat.detections().get(0).bbox()).isNull();
+
+        server.verify();
+    }
+
+    @Test
     void predict_modaliteEnMinuscule_envoyeeEnMajuscule() {
         server.expect(requestToUriTemplate(BASE_URL + "/predict?modalite=CT&zone=THORAX"))
                 .andExpect(method(HttpMethod.POST))

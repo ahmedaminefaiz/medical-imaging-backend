@@ -40,11 +40,11 @@ class DetectionMapperTest {
         assertThat(response.getBbox().getY()).isEqualTo(20);
         assertThat(response.getBbox().getLargeur()).isEqualTo(30);
         assertThat(response.getBbox().getHauteur()).isEqualTo(40);
-        assertThat(response.getCheminMasque()).isNull();
+        assertThat(response.isApercuMasqueDisponible()).isFalse();
     }
 
     @Test
-    void toResponse_detectionMasque_bboxNullEtCheminMasqueRenseigne() {
+    void toResponse_detectionMasque_bboxNullEtApercuMasqueDisponible() {
         Image image = Image.builder().id(7L).build();
         Detection detection = Detection.builder()
                 .id(2L)
@@ -59,6 +59,23 @@ class DetectionMapperTest {
 
         assertThat(response.getType()).isEqualTo("MASQUE");
         assertThat(response.getBbox()).isNull();
-        assertThat(response.getCheminMasque()).isEqualTo("examens/x/masque.png");
+        assertThat(response.isApercuMasqueDisponible()).isTrue();
+    }
+
+    @Test
+    void toResponse_detectionMasqueSansCheminMasque_apercuMasqueIndisponible() {
+        Image image = Image.builder().id(7L).build();
+        Detection detection = Detection.builder()
+                .id(3L)
+                .image(image)
+                .type(DetectionTypeEnum.MASQUE)
+                .statut(DetectionStatutEnum.EN_ATTENTE)
+                .confiance(0.7)
+                .cheminMasque(null)
+                .build();
+
+        DetectionResponse response = mapper.toResponse(detection);
+
+        assertThat(response.isApercuMasqueDisponible()).isFalse();
     }
 }

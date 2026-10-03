@@ -12,12 +12,18 @@ import com.xeleronai.medicalimagingbackend.service.AnalyseNonLancableException;
 import com.xeleronai.medicalimagingbackend.service.DetectionAiClient;
 import com.xeleronai.medicalimagingbackend.service.DetectionAiIndisponibleException;
 import com.xeleronai.medicalimagingbackend.service.DetectionAnalyseService;
+import com.xeleronai.medicalimagingbackend.service.DetectionIA;
 import com.xeleronai.medicalimagingbackend.service.DetectionRunPersistenceService;
 import com.xeleronai.medicalimagingbackend.service.LectureImpossibleException;
+import com.xeleronai.medicalimagingbackend.service.MasqueDetecte;
 import com.xeleronai.medicalimagingbackend.service.PredictionIA;
 import com.xeleronai.medicalimagingbackend.service.RessourceIntrouvableException;
 import com.xeleronai.medicalimagingbackend.service.StorageService;
+import com.xeleronai.medicalimagingbackend.service.UploadEchoueException;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -82,7 +88,18 @@ public class DetectionAnalyseServiceImpl implements DetectionAnalyseService {
             PredictionIA prediction = detectionAiClient.predict(
                     fichiers, examen.getModalite(), examen.getZone().name());
 
-            detectionRunPersistenceService.enregistrerSucces(examenId, images, prediction, utilisateurId);
+            if ("MASQUE".equals(prediction.type())) {
+                List<MasqueDetecte> masques = new ArrayList<>();
+                for (DetectionIA d : prediction.detections()) {
+                    byte[] pngMasque = Base64.getDecoder().decode(d.masqueBase64());
+                    String cle = "examens/" + examenId + "/masques/" + UUID.randomUUID() + ".png";
+                    storageService.uploader(cle, pngMasque, "image/png");
+                    masques.add(new MasqueDetecte(d.coupe(), d.label(), d.confiance(), cle));
+                }
+                detectionRunPersistenceService.enregistrerSuccesMasques(examenId, images, masques, utilisateurId);
+            } else {
+                detectionRunPersistenceService.enregistrerSucces(examenId, images, prediction, utilisateurId);
+            }
         } catch (Exception e) {
             log.error("Échec de l'analyse IA pour l'examen {}", examenId, e);
             detectionRunPersistenceService.enregistrerEchec(examenId, messageLisible(e), utilisateurId);
@@ -93,6 +110,7 @@ public class DetectionAnalyseServiceImpl implements DetectionAnalyseService {
         String base = switch (e) {
             case DetectionAiIndisponibleException ignored -> "Service de détection IA injoignable ou en erreur.";
             case LectureImpossibleException ignored -> "Échec de lecture d'une image depuis le stockage.";
+            case UploadEchoueException ignored -> "Échec du stockage d'un masque de segmentation.";
             default -> "Erreur inattendue pendant l'analyse.";
         };
         return base.length() > 500 ? base.substring(0, 500) : base;

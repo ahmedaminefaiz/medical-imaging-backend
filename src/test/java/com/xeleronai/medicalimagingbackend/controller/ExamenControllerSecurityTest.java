@@ -114,4 +114,17 @@ class ExamenControllerSecurityTest {
                         .with(user("technicien@test.com").roles("TECHNICIEN")))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void masque_sansAuthentification_retourne401() throws Exception {
+        mockMvc.perform(get("/api/v1/examens/1/detections/1/masque"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void masque_detectionInexistante_retourne404() throws Exception {
+        mockMvc.perform(get("/api/v1/examens/1/detections/999999999/masque")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isNotFound());
+    }
 }
