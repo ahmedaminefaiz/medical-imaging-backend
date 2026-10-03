@@ -19,5 +19,5 @@ public class DetectionResponse {
     private String statut;
     private Integer coupe;
     private BboxResponse bbox;
-    private String cheminMasque;
+    private boolean apercuMasqueDisponible;
 }

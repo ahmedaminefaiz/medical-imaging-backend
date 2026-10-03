@@ -94,6 +94,27 @@ class DetectionRepositoryQueryTest {
     }
 
     @Test
+    void findByIdAndExamenId_detectionDeLExamen_estRetrouvee() {
+        Detection masque = detectionRepository.save(Detection.builder()
+                .image(image).type(DetectionTypeEnum.MASQUE).anomalie("rate").confiance(0.95)
+                .coupe(0).cheminMasque("examens/x/masques/uuid.png").build());
+
+        Detection trouvee = detectionRepository.findByIdAndExamenId(masque.getId(), examen.getId()).orElseThrow();
+
+        assertThat(trouvee.getId()).isEqualTo(masque.getId());
+        assertThat(trouvee.getCheminMasque()).isEqualTo("examens/x/masques/uuid.png");
+    }
+
+    @Test
+    void findByIdAndExamenId_detectionDuneAutreExamen_estVide() {
+        Detection masque = detectionRepository.save(Detection.builder()
+                .image(image).type(DetectionTypeEnum.MASQUE).anomalie("rate").confiance(0.95)
+                .coupe(0).cheminMasque("examens/x/masques/uuid.png").build());
+
+        assertThat(detectionRepository.findByIdAndExamenId(masque.getId(), examen.getId() + 1_000_000L)).isEmpty();
+    }
+
+    @Test
     void statutNonRenseigne_prendLaValeurParDefautEnAttente() {
         Detection detection = Detection.builder()
                 .image(image).type(DetectionTypeEnum.BOX).confiance(0.5)

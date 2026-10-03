@@ -2,6 +2,7 @@ package com.xeleronai.medicalimagingbackend.service;
 
 import com.xeleronai.medicalimagingbackend.dto.detection.AnalyseStatutResponse;
 import com.xeleronai.medicalimagingbackend.dto.detection.DetectionResponse;
+import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import java.util.List;
 
 public interface DetectionQueryService {
@@ -20,4 +21,15 @@ public interface DetectionQueryService {
      * @throws RessourceIntrouvableException si l'examen n'existe pas.
      */
     AnalyseStatutResponse statutAnalyse(Long examenId);
+
+    /**
+     * Lit le PNG d'un masque de segmentation et écrit l'AuditLog VIEW_MASQUE
+     * (seulement après succès de la lecture MinIO).
+     *
+     * @throws RessourceIntrouvableException si la détection n'existe pas,
+     *         n'appartient pas à l'examen, n'est pas de type MASQUE, ou n'a
+     *         pas de masque stocké.
+     * @throws LectureImpossibleException si MinIO est injoignable ou l'objet absent.
+     */
+    byte[] lireMasque(Long examenId, Long detectionId, Utilisateur utilisateurCourant);
 }

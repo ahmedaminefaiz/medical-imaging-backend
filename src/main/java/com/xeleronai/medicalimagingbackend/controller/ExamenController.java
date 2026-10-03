@@ -156,6 +156,22 @@ public class ExamenController {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(contenu);
     }
 
+    @GetMapping("/{examenId}/detections/{detectionId}/masque")
+    @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN', 'ADMIN')")
+    @Operation(summary = "PNG du masque de segmentation d'une détection")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Masque PNG"),
+        @ApiResponse(responseCode = "401", description = "Non authentifié"),
+        @ApiResponse(responseCode = "403", description = "Rôle non autorisé"),
+        @ApiResponse(responseCode = "404", description = "Détection introuvable ou sans masque"),
+        @ApiResponse(responseCode = "503", description = "Fichier temporairement indisponible")
+    })
+    public ResponseEntity<byte[]> masque(@PathVariable Long examenId, @PathVariable Long detectionId) {
+        Utilisateur utilisateurCourant = securityUtils.getUtilisateurCourant();
+        byte[] contenu = detectionQueryService.lireMasque(examenId, detectionId, utilisateurCourant);
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(contenu);
+    }
+
     @ExceptionHandler(UploadValidationException.class)
     public ResponseEntity<String> handleUploadValidation(UploadValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
