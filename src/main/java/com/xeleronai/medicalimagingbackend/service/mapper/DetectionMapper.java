@@ -14,6 +14,7 @@ public interface DetectionMapper {
     @Mapping(target = "imageId", source = "image.id")
     @Mapping(target = "bbox", expression = "java(toBbox(detection))")
     @Mapping(target = "apercuMasqueDisponible", expression = "java(toApercuMasqueDisponible(detection))")
+    @Mapping(target = "validateurEmail", expression = "java(toValidateurEmail(detection))")
     DetectionResponse toResponse(Detection detection);
 
     /**
@@ -39,5 +40,13 @@ public interface DetectionMapper {
      */
     default boolean toApercuMasqueDisponible(Detection detection) {
         return detection.getType() == DetectionTypeEnum.MASQUE && detection.getCheminMasque() != null;
+    }
+
+    /**
+     * Utilisateur ne porte pas de nom affichable : seul l'email identifie
+     * le validateur côté API.
+     */
+    default String toValidateurEmail(Detection detection) {
+        return detection.getValidateur() != null ? detection.getValidateur().getEmail() : null;
     }
 }

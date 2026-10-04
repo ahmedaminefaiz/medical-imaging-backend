@@ -1,6 +1,7 @@
 package com.xeleronai.medicalimagingbackend.controller;
 
 import com.xeleronai.medicalimagingbackend.dto.detection.AnalyseLanceeResponse;
+import com.xeleronai.medicalimagingbackend.dto.detection.ValiderDetectionRequest;
 import com.xeleronai.medicalimagingbackend.dto.examen.ExamenUploadResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.UploadStandardRequest;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
@@ -9,10 +10,12 @@ import com.xeleronai.medicalimagingbackend.service.AnalyseEnCoursException;
 import com.xeleronai.medicalimagingbackend.service.AnalyseNonLancableException;
 import com.xeleronai.medicalimagingbackend.service.DetectionAnalyseService;
 import com.xeleronai.medicalimagingbackend.service.DetectionQueryService;
+import com.xeleronai.medicalimagingbackend.service.DetectionValidationService;
 import com.xeleronai.medicalimagingbackend.service.ExamenQueryService;
 import com.xeleronai.medicalimagingbackend.service.ExamenUploadService;
 import com.xeleronai.medicalimagingbackend.service.LectureImpossibleException;
 import com.xeleronai.medicalimagingbackend.service.RessourceIntrouvableException;
+import com.xeleronai.medicalimagingbackend.service.StatutDetectionInvalideException;
 import com.xeleronai.medicalimagingbackend.service.UploadEchoueException;
 import com.xeleronai.medicalimagingbackend.service.UploadValidationException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,8 +36,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +56,7 @@ public class ExamenController {
     private final ExamenQueryService examenQueryService;
     private final DetectionQueryService detectionQueryService;
     private final DetectionAnalyseService detectionAnalyseService;
+    private final DetectionValidationService detectionValidationService;
     private final SecurityUtils securityUtils;
 
     @PostMapping(value = "/upload/standard", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -147,6 +153,25 @@ public class ExamenController {
         return ResponseEntity.ok(detectionQueryService.statutAnalyse(examenId));
     }
 
+    @PatchMapping("/{examenId}/detections/{detectionId}/statut")
+    @PreAuthorize("hasRole('RADIOLOGUE')")
+    @Operation(summary = "Valide ou rejette une détection IA (acte clinique réservé au radiologue)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Détection mise à jour"),
+        @ApiResponse(responseCode = "400", description = "Statut invalide (attendu ACCEPTEE ou REJETEE)"),
+        @ApiResponse(responseCode = "401", description = "Non authentifié"),
+        @ApiResponse(responseCode = "403", description = "Rôle non autorisé"),
+        @ApiResponse(responseCode = "404", description = "Détection introuvable")
+    })
+    public ResponseEntity<?> validerStatutDetection(
+            @PathVariable Long examenId,
+            @PathVariable Long detectionId,
+            @Valid @RequestBody ValiderDetectionRequest request) {
+        Utilisateur utilisateurCourant = securityUtils.getUtilisateurCourant();
+        return ResponseEntity.ok(detectionValidationService.validerStatut(
+                examenId, detectionId, request.getStatut(), utilisateurCourant));
+    }
+
     @GetMapping("/{examenId}/images/{imageId}/apercu")
     @PreAuthorize("hasAnyRole('RADIOLOGUE', 'TECHNICIEN', 'ADMIN')")
     @Operation(summary = "Aperçu PNG d'une image")
@@ -207,5 +232,10 @@ public class ExamenController {
     @ExceptionHandler(AnalyseNonLancableException.class)
     public ResponseEntity<String> handleAnalyseNonLancable(AnalyseNonLancableException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(StatutDetectionInvalideException.class)
+    public ResponseEntity<String> handleStatutDetectionInvalide(StatutDetectionInvalideException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }

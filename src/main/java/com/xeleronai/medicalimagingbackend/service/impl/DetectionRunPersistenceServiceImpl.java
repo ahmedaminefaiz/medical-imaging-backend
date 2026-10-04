@@ -5,6 +5,7 @@ import com.xeleronai.medicalimagingbackend.entity.Detection;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.enums.AnalyseStatutEnum;
+import com.xeleronai.medicalimagingbackend.entity.enums.AuditActionEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.DetectionStatutEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.DetectionTypeEnum;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
@@ -137,7 +138,7 @@ public class DetectionRunPersistenceServiceImpl implements DetectionRunPersisten
     private void ecrireAudit(Long examenId, Long utilisateurId) {
         auditLogRepository.save(AuditLog.builder()
                 .utilisateur(utilisateurRepository.getReferenceById(utilisateurId))
-                .action("DETECTION_RUN")
+                .action(AuditActionEnum.DETECTION_RUN.name())
                 .resourceType("EXAMEN")
                 .resourceId(examenId)
                 .build());

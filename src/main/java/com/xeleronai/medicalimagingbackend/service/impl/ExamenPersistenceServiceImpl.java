@@ -5,6 +5,7 @@ import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.AuditActionEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
@@ -61,7 +62,7 @@ public class ExamenPersistenceServiceImpl implements ExamenPersistenceService {
 
         auditLogRepository.save(AuditLog.builder()
                 .utilisateur(utilisateurCourant)
-                .action("UPLOAD_EXAMEN")
+                .action(AuditActionEnum.UPLOAD_EXAMEN.name())
                 .resourceType("EXAMEN")
                 .resourceId(sauvegarde.getId())
                 .build());

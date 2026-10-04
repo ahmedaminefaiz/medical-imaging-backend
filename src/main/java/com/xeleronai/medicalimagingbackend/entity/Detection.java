@@ -77,6 +77,13 @@ public class Detection {
     @Column(name = "chemin_masque", length = 255)
     private String cheminMasque;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "validateur_id")
+    private Utilisateur validateur;
+
+    @Column(name = "valide_le")
+    private LocalDateTime valideLe;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
