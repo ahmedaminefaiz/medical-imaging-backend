@@ -1,10 +1,13 @@
 package com.xeleronai.medicalimagingbackend.service.impl;
 
+import com.xeleronai.medicalimagingbackend.entity.AuditLog;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.entity.enums.AnalyseStatutEnum;
+import com.xeleronai.medicalimagingbackend.entity.enums.AuditActionEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
+import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.repository.ImageRepository;
 import com.xeleronai.medicalimagingbackend.service.AnalyseEnCoursException;
@@ -50,6 +53,7 @@ public class DetectionAnalyseServiceImpl implements DetectionAnalyseService {
     private final StorageService storageService;
     private final DetectionAiClient detectionAiClient;
     private final DetectionRunPersistenceService detectionRunPersistenceService;
+    private final AuditLogRepository auditLogRepository;
 
     @Override
     @Transactional
@@ -71,6 +75,13 @@ public class DetectionAnalyseServiceImpl implements DetectionAnalyseService {
 
         examen.setStatutAnalyse(AnalyseStatutEnum.EN_COURS);
         examenRepository.save(examen);
+
+        auditLogRepository.save(AuditLog.builder()
+                .utilisateur(utilisateurCourant)
+                .action(AuditActionEnum.ANALYSE_DEMANDEE.name())
+                .resourceType("EXAMEN")
+                .resourceId(examenId)
+                .build());
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.xeleronai.medicalimagingbackend.entity.AuditLog;
 import com.xeleronai.medicalimagingbackend.entity.Detection;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.AuditActionEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.DetectionTypeEnum;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.DetectionRepository;
@@ -69,7 +70,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
 
         auditLogRepository.save(AuditLog.builder()
                 .utilisateur(utilisateurCourant)
-                .action("VIEW_MASQUE")
+                .action(AuditActionEnum.VIEW_MASQUE.name())
                 .resourceType("DETECTION")
                 .resourceId(detectionId)
                 .build());

@@ -7,6 +7,7 @@ import com.xeleronai.medicalimagingbackend.entity.AuditLog;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
+import com.xeleronai.medicalimagingbackend.entity.enums.AuditActionEnum;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.repository.ImageRepository;
@@ -75,7 +76,7 @@ public class ExamenQueryServiceImpl implements ExamenQueryService {
 
         auditLogRepository.save(AuditLog.builder()
                 .utilisateur(utilisateurCourant)
-                .action("VIEW_IMAGE")
+                .action(AuditActionEnum.VIEW_IMAGE.name())
                 .resourceType("IMAGE")
                 .resourceId(imageId)
                 .build());

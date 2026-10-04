@@ -10,12 +10,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.xeleronai.medicalimagingbackend.entity.AuditLog;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.entity.enums.AnalyseStatutEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.RoleUtilisateur;
+import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
 import com.xeleronai.medicalimagingbackend.repository.ExamenRepository;
 import com.xeleronai.medicalimagingbackend.repository.ImageRepository;
 import com.xeleronai.medicalimagingbackend.service.AnalyseEnCoursException;
@@ -54,6 +56,8 @@ class DetectionAnalyseServiceImplTest {
     private DetectionAiClient detectionAiClient;
     @Mock
     private DetectionRunPersistenceService detectionRunPersistenceService;
+    @Mock
+    private AuditLogRepository auditLogRepository;
 
     private DetectionAnalyseServiceImpl service;
 
@@ -62,7 +66,12 @@ class DetectionAnalyseServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new DetectionAnalyseServiceImpl(
-                examenRepository, imageRepository, storageService, detectionAiClient, detectionRunPersistenceService);
+                examenRepository,
+                imageRepository,
+                storageService,
+                detectionAiClient,
+                detectionRunPersistenceService,
+                auditLogRepository);
         utilisateur = Utilisateur.builder().id(1L).email("radio@test.com").role(RoleUtilisateur.RADIOLOGUE).build();
     }
 
@@ -86,6 +95,21 @@ class DetectionAnalyseServiceImplTest {
         ArgumentCaptor<Examen> captor = ArgumentCaptor.forClass(Examen.class);
         verify(examenRepository).save(captor.capture());
         assertThat(captor.getValue().getStatutAnalyse()).isEqualTo(AnalyseStatutEnum.EN_COURS);
+    }
+
+    @Test
+    void lancerAnalyse_examenValide_ecritAuditAnalyseDemandee() {
+        Examen examen = examenValide(42L);
+        when(examenRepository.findById(42L)).thenReturn(Optional.of(examen));
+
+        service.lancerAnalyse(42L, utilisateur);
+
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).save(captor.capture());
+        assertThat(captor.getValue().getAction()).isEqualTo("ANALYSE_DEMANDEE");
+        assertThat(captor.getValue().getResourceType()).isEqualTo("EXAMEN");
+        assertThat(captor.getValue().getResourceId()).isEqualTo(42L);
+        assertThat(captor.getValue().getUtilisateur()).isEqualTo(utilisateur);
     }
 
     @Test

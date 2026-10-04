@@ -3,6 +3,7 @@ package com.xeleronai.medicalimagingbackend.controller;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -126,5 +128,49 @@ class ExamenControllerSecurityTest {
         mockMvc.perform(get("/api/v1/examens/1/detections/999999999/masque")
                         .with(user("radio@test.com").roles("RADIOLOGUE")))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void validerStatutDetection_sansAuthentification_retourne401() throws Exception {
+        mockMvc.perform(patch("/api/v1/examens/1/detections/1/statut")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statut\":\"ACCEPTEE\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void validerStatutDetection_roleTechnicien_retourne403() throws Exception {
+        mockMvc.perform(patch("/api/v1/examens/1/detections/1/statut")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statut\":\"ACCEPTEE\"}")
+                        .with(user("technicien@test.com").roles("TECHNICIEN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void validerStatutDetection_roleAdmin_retourne403() throws Exception {
+        mockMvc.perform(patch("/api/v1/examens/1/detections/1/statut")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statut\":\"ACCEPTEE\"}")
+                        .with(user("admin@test.com").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void validerStatutDetection_roleRadiologue_detectionInexistante_retourne404() throws Exception {
+        mockMvc.perform(patch("/api/v1/examens/1/detections/999999999/statut")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statut\":\"ACCEPTEE\"}")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void validerStatutDetection_roleRadiologue_statutInvalide_retourne400() throws Exception {
+        mockMvc.perform(patch("/api/v1/examens/1/detections/1/statut")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"statut\":\"EN_ATTENTE\"}")
+                        .with(user("radio@test.com").roles("RADIOLOGUE")))
+                .andExpect(status().isBadRequest());
     }
 }
