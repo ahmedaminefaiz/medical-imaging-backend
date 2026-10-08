@@ -98,7 +98,8 @@ public class ExamenController {
             @RequestParam(required = false) String mrn,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return ResponseEntity.ok(examenQueryService.lister(mrn, page, size));
+        Utilisateur utilisateurCourant = securityUtils.getUtilisateurCourant();
+        return ResponseEntity.ok(examenQueryService.lister(mrn, page, size, utilisateurCourant));
     }
 
     @GetMapping("/{id}")

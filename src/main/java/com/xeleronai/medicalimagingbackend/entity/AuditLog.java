@@ -30,6 +30,10 @@ public class AuditLog {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id", nullable = false)
+    private Institution institution;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilisateur_id")
     private Utilisateur utilisateur;
 

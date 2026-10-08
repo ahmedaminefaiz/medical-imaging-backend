@@ -56,8 +56,13 @@ class ExamenControllerSecurityTest {
     @Test
     void listerExamens_roleAdmin_estAutorise() throws Exception {
         // Contrairement à l'upload, ADMIN a accès en lecture (voir specify.md).
+        // lister() résout désormais l'Utilisateur authentifié via SecurityUtils
+        // (pour filtrer par institution) : on réutilise le compte seedé
+        // radio@test.com (le seul qui existe réellement en base) avec le rôle
+        // ADMIN mocké — @PreAuthorize évalue ce rôle mocké, indépendamment du
+        // rôle RADIOLOGUE réellement stocké sur ce compte.
         mockMvc.perform(get("/api/v1/examens")
-                        .with(user("admin@test.com").roles("ADMIN")))
+                        .with(user("radio@test.com").roles("ADMIN")))
                 .andExpect(status().isOk());
     }
 

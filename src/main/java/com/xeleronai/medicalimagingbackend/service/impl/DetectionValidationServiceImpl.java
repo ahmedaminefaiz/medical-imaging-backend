@@ -45,6 +45,7 @@ public class DetectionValidationServiceImpl implements DetectionValidationServic
         Detection sauvegarde = detectionRepository.save(detection);
 
         auditLogRepository.save(AuditLog.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .utilisateur(utilisateurCourant)
                 .action(AuditActionEnum.DETECTION_VALIDATION.name() + ":" + ancienStatut + "->" + nouveauStatut)
                 .resourceType("DETECTION")

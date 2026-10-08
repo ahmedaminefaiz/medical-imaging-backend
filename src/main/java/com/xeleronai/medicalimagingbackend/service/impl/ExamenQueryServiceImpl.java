@@ -38,12 +38,13 @@ public class ExamenQueryServiceImpl implements ExamenQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ExamenSummaryResponse> lister(String mrn, int page, int size) {
+    public PageResponse<ExamenSummaryResponse> lister(String mrn, int page, int size, Utilisateur utilisateurCourant) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateExamen"));
+        Long institutionId = utilisateurCourant.getInstitution().getId();
 
         Page<Examen> resultat = StringUtils.hasText(mrn)
-                ? examenRepository.findByPatientMrnAvecPatient(mrn, pageable)
-                : examenRepository.findAllAvecPatient(pageable);
+                ? examenRepository.findByPatientMrnAvecPatient(mrn, institutionId, pageable)
+                : examenRepository.findAllAvecPatient(institutionId, pageable);
 
         return PageResponse.<ExamenSummaryResponse>builder()
                 .content(resultat.getContent().stream().map(examenMapper::toSummaryResponse).toList())
@@ -75,6 +76,7 @@ public class ExamenQueryServiceImpl implements ExamenQueryService {
         byte[] contenu = storageService.lire(image.getCheminApercu());
 
         auditLogRepository.save(AuditLog.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .utilisateur(utilisateurCourant)
                 .action(AuditActionEnum.VIEW_IMAGE.name())
                 .resourceType("IMAGE")

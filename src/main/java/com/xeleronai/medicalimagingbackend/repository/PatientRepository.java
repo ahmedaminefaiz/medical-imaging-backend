@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
-    Optional<Patient> findByMrn(String mrn);
+    Optional<Patient> findByInstitutionIdAndMrn(Long institutionId, String mrn);
 }

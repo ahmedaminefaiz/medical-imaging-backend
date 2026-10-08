@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.xeleronai.medicalimagingbackend.entity.Detection;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
+import com.xeleronai.medicalimagingbackend.entity.Institution;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.enums.DetectionStatutEnum;
 import com.xeleronai.medicalimagingbackend.entity.enums.DetectionTypeEnum;
@@ -32,6 +33,8 @@ class DetectionRepositoryQueryTest {
     private ImageRepository imageRepository;
     @Autowired
     private DetectionRepository detectionRepository;
+    @Autowired
+    private InstitutionRepository institutionRepository;
 
     private Patient patient;
     private Examen examen;
@@ -39,9 +42,13 @@ class DetectionRepositoryQueryTest {
 
     @BeforeEach
     void setUp() {
+        Institution institutionParDefaut = institutionRepository.findByCode(Institution.CODE_DEFAUT).orElseThrow();
+
         String suffixe = UUID.randomUUID().toString();
-        patient = patientRepository.save(Patient.builder().mrn("TEST-DET-" + suffixe).nom("Dupont").build());
-        examen = examenRepository.save(Examen.builder().patient(patient).type("CT").modalite("CT").build());
+        patient = patientRepository.save(Patient.builder()
+                .institution(institutionParDefaut).mrn("TEST-DET-" + suffixe).nom("Dupont").build());
+        examen = examenRepository.save(Examen.builder()
+                .institution(institutionParDefaut).patient(patient).type("CT").modalite("CT").build());
         image = imageRepository.save(Image.builder()
                 .examen(examen).cheminOriginal("examens/x/1.dcm").format(FormatImageEnum.DICOM).ordre(0).build());
     }

@@ -7,7 +7,7 @@ import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 
 public interface ExamenQueryService {
 
-    PageResponse<ExamenSummaryResponse> lister(String mrn, int page, int size);
+    PageResponse<ExamenSummaryResponse> lister(String mrn, int page, int size, Utilisateur utilisateurCourant);
 
     ExamenDetailResponse detail(Long examenId);
 

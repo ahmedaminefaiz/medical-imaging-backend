@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import com.xeleronai.medicalimagingbackend.dto.examen.ExamenUploadResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.UploadStandardRequest;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
+import com.xeleronai.medicalimagingbackend.entity.Institution;
 import com.xeleronai.medicalimagingbackend.entity.Patient;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.entity.enums.ExamenZoneEnum;
@@ -81,7 +82,8 @@ class ExamenUploadServiceImplTest {
                 examenMapper);
 
         patient = Patient.builder().id(1L).mrn("MRN-1").build();
-        utilisateur = Utilisateur.builder().id(1L).email("radio@test.com").role(RoleUtilisateur.RADIOLOGUE).build();
+        utilisateur = Utilisateur.builder().id(1L).email("radio@test.com").role(RoleUtilisateur.RADIOLOGUE)
+                .institution(Institution.builder().id(7L).build()).build();
         examenSauvegarde = Examen.builder().id(42L).patient(patient).build();
         reponseAttendue = ExamenUploadResponse.builder().examenId(42L).build();
     }
@@ -96,7 +98,8 @@ class ExamenUploadServiceImplTest {
                 .nom("Dupont")
                 .build();
 
-        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, null)).thenReturn(patient);
+        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, null, utilisateur.getInstitution()))
+                .thenReturn(patient);
         when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), any(), anyList()))
                 .thenReturn(examenSauvegarde);
         when(examenMapper.toResponse(examenSauvegarde)).thenReturn(reponseAttendue);
@@ -131,7 +134,8 @@ class ExamenUploadServiceImplTest {
                 .nom("Dupont")
                 .build();
 
-        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, null)).thenReturn(patient);
+        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, null, utilisateur.getInstitution()))
+                .thenReturn(patient);
         // Le premier fichier s'uploade correctement, le second échoue.
         doNothing().when(storageService).uploader(anyString(), eq(f1));
         doThrow(new UploadEchoueException("panne minio", new RuntimeException()))
@@ -158,7 +162,8 @@ class ExamenUploadServiceImplTest {
                 new DicomMetadata("MRN-1", "Dupont", null, "M", null, "CT", ExamenZoneEnum.THORAX, "Thorax", "STUDY-UID-1");
         when(dicomMetadataService.extraire(f1)).thenReturn(meta1);
         when(dicomMetadataService.extraire(f2)).thenReturn(meta2);
-        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, "M")).thenReturn(patient);
+        when(patientLookupService.trouverOuCreerPatient("MRN-1", "Dupont", null, "M", utilisateur.getInstitution()))
+                .thenReturn(patient);
         when(dicomPreviewService.genererApercuPng(f1)).thenReturn(Optional.of(new byte[] {9, 9}));
         when(dicomPreviewService.genererApercuPng(f2)).thenReturn(Optional.empty());
         when(examenPersistenceService.persisterExamen(any(), any(), any(), any(), any(), any(), anyList()))

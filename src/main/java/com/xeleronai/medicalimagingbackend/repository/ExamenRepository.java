@@ -9,9 +9,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface ExamenRepository extends JpaRepository<Examen, Long> {
 
-    @Query("SELECT e FROM Examen e JOIN FETCH e.patient")
-    Page<Examen> findAllAvecPatient(Pageable pageable);
+    @Query("SELECT e FROM Examen e JOIN FETCH e.patient WHERE e.institution.id = :institutionId")
+    Page<Examen> findAllAvecPatient(@Param("institutionId") Long institutionId, Pageable pageable);
 
-    @Query("SELECT e FROM Examen e JOIN FETCH e.patient p WHERE p.mrn = :mrn")
-    Page<Examen> findByPatientMrnAvecPatient(@Param("mrn") String mrn, Pageable pageable);
+    @Query("SELECT e FROM Examen e JOIN FETCH e.patient p WHERE p.mrn = :mrn AND e.institution.id = :institutionId")
+    Page<Examen> findByPatientMrnAvecPatient(
+            @Param("mrn") String mrn, @Param("institutionId") Long institutionId, Pageable pageable);
 }

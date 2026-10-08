@@ -12,6 +12,7 @@ import com.xeleronai.medicalimagingbackend.dto.common.PageResponse;
 import com.xeleronai.medicalimagingbackend.dto.examen.ExamenSummaryResponse;
 import com.xeleronai.medicalimagingbackend.entity.Examen;
 import com.xeleronai.medicalimagingbackend.entity.Image;
+import com.xeleronai.medicalimagingbackend.entity.Institution;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.entity.enums.RoleUtilisateur;
 import com.xeleronai.medicalimagingbackend.repository.AuditLogRepository;
@@ -57,7 +58,8 @@ class ExamenQueryServiceImplTest {
         service = new ExamenQueryServiceImpl(
                 examenRepository, imageRepository, storageService, auditLogRepository, examenMapper);
 
-        utilisateur = Utilisateur.builder().id(1L).email("radio@test.com").role(RoleUtilisateur.RADIOLOGUE).build();
+        utilisateur = Utilisateur.builder().id(1L).email("radio@test.com").role(RoleUtilisateur.RADIOLOGUE)
+                .institution(Institution.builder().id(7L).build()).build();
         examen = Examen.builder().id(42L).build();
         image = Image.builder().id(101L).examen(examen).cheminApercu("examens/42/x_apercu.png").build();
     }
@@ -124,25 +126,25 @@ class ExamenQueryServiceImplTest {
     @Test
     void lister_sansMrn_appelleFindAllAvecPatient() {
         Page<Examen> page = new PageImpl<>(java.util.List.of(examen), PageRequest.of(0, 20), 1);
-        when(examenRepository.findAllAvecPatient(any())).thenReturn(page);
+        when(examenRepository.findAllAvecPatient(eq(7L), any())).thenReturn(page);
         when(examenMapper.toSummaryResponse(examen)).thenReturn(ExamenSummaryResponse.builder().examenId(42L).build());
 
-        PageResponse<ExamenSummaryResponse> resultat = service.lister(null, 0, 20);
+        PageResponse<ExamenSummaryResponse> resultat = service.lister(null, 0, 20, utilisateur);
 
         assertThat(resultat.getContent()).hasSize(1);
         assertThat(resultat.getTotalElements()).isEqualTo(1);
-        verify(examenRepository, never()).findByPatientMrnAvecPatient(any(), any());
+        verify(examenRepository, never()).findByPatientMrnAvecPatient(any(), any(), any());
     }
 
     @Test
     void lister_avecMrn_appelleFindByPatientMrnAvecPatient() {
         Page<Examen> page = new PageImpl<>(java.util.List.of(examen), PageRequest.of(0, 20), 1);
-        when(examenRepository.findByPatientMrnAvecPatient(eq("MRN-1"), any())).thenReturn(page);
+        when(examenRepository.findByPatientMrnAvecPatient(eq("MRN-1"), eq(7L), any())).thenReturn(page);
         when(examenMapper.toSummaryResponse(examen)).thenReturn(ExamenSummaryResponse.builder().examenId(42L).build());
 
-        service.lister("MRN-1", 0, 20);
+        service.lister("MRN-1", 0, 20, utilisateur);
 
-        verify(examenRepository).findByPatientMrnAvecPatient(eq("MRN-1"), any());
-        verify(examenRepository, never()).findAllAvecPatient(any());
+        verify(examenRepository).findByPatientMrnAvecPatient(eq("MRN-1"), eq(7L), any());
+        verify(examenRepository, never()).findAllAvecPatient(any(), any());
     }
 }
