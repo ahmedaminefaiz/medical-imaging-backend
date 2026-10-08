@@ -1,5 +1,6 @@
 package com.xeleronai.medicalimagingbackend.security;
 
+import com.xeleronai.medicalimagingbackend.entity.Institution;
 import com.xeleronai.medicalimagingbackend.entity.Utilisateur;
 import com.xeleronai.medicalimagingbackend.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,5 +23,9 @@ public class SecurityUtils {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Utilisateur authentifié introuvable en base"));
+    }
+
+    public Institution getInstitutionCourante() {
+        return getUtilisateurCourant().getInstitution();
     }
 }

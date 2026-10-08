@@ -39,6 +39,7 @@ public class ExamenPersistenceServiceImpl implements ExamenPersistenceService {
             List<ImagePreparee> images) {
 
         Examen examen = Examen.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .patient(patient)
                 .creePar(utilisateurCourant)
                 .type(type)
@@ -61,6 +62,7 @@ public class ExamenPersistenceServiceImpl implements ExamenPersistenceService {
         Examen sauvegarde = examenRepository.save(examen);
 
         auditLogRepository.save(AuditLog.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .utilisateur(utilisateurCourant)
                 .action(AuditActionEnum.UPLOAD_EXAMEN.name())
                 .resourceType("EXAMEN")

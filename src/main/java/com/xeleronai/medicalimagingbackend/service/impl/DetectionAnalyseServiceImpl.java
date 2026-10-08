@@ -77,6 +77,7 @@ public class DetectionAnalyseServiceImpl implements DetectionAnalyseService {
         examenRepository.save(examen);
 
         auditLogRepository.save(AuditLog.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .utilisateur(utilisateurCourant)
                 .action(AuditActionEnum.ANALYSE_DEMANDEE.name())
                 .resourceType("EXAMEN")

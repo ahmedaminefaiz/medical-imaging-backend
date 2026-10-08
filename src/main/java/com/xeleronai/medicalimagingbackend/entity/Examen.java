@@ -40,6 +40,10 @@ public class Examen {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id", nullable = false)
+    private Institution institution;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 

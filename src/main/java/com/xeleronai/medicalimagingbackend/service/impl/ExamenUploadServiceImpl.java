@@ -54,7 +54,8 @@ public class ExamenUploadServiceImpl implements ExamenUploadService {
         fileTypeValidator.validerExtensionsStandard(request.getFiles());
 
         Patient patient = patientLookupService.trouverOuCreerPatient(
-                request.getMrn(), request.getNom(), request.getDateNaissance(), request.getSexe());
+                request.getMrn(), request.getNom(), request.getDateNaissance(), request.getSexe(),
+                utilisateurCourant.getInstitution());
 
         UUID batchId = UUID.randomUUID();
         List<String> clesPoussees = new ArrayList<>();
@@ -107,7 +108,8 @@ public class ExamenUploadServiceImpl implements ExamenUploadService {
         }
 
         Patient patient = patientLookupService.trouverOuCreerPatient(
-                reference.mrn(), reference.nom(), reference.dateNaissance(), reference.sexe());
+                reference.mrn(), reference.nom(), reference.dateNaissance(), reference.sexe(),
+                utilisateurCourant.getInstitution());
 
         UUID batchId = UUID.randomUUID();
         List<String> clesPoussees = new ArrayList<>();

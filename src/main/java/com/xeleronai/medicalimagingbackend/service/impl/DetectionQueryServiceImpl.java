@@ -69,6 +69,7 @@ public class DetectionQueryServiceImpl implements DetectionQueryService {
         byte[] contenu = storageService.lire(detection.getCheminMasque());
 
         auditLogRepository.save(AuditLog.builder()
+                .institution(utilisateurCourant.getInstitution())
                 .utilisateur(utilisateurCourant)
                 .action(AuditActionEnum.VIEW_MASQUE.name())
                 .resourceType("DETECTION")
